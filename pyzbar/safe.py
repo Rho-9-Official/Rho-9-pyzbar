@@ -13,10 +13,10 @@ decode in a separate OS process with a hard timeout, so that:
     its DB connections, or any other live session/state; and
   - a hang is bounded by wall-clock time and the worker is killed.
 
-This mirrors the fix already applied to Pillow decoding in Elysium's
-`scan_qr_code()` (v2.5.1, post-pentest, isolated worker + timeout, decode
-failure/timeout itself treated as a CRITICAL signal rather than silently
-swallowed as "clean").
+This mirrors the same pattern commonly applied to Pillow/image decoding
+in security-conscious pipelines that handle untrusted, attacker-supplied
+images: isolated worker + hard timeout, with a decode failure or timeout
+treated as a signal to reject, not silently swallowed as "clean".
 
 Implementation notes
 ---------------------

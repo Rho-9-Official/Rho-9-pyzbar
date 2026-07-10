@@ -5,14 +5,16 @@ Fork version: `0.1.9-rho9.1`
 
 ## Why this exists
 
-Elysium's `scan_qr_code()` runs `pyzbar.pyzbar.decode()` on fully
-attacker-controlled image bytes, reachable from any chat message. The
-post-pentest v2.5.1 fix isolated the *PIL* decode step (libpng/libjpeg/
-libwebp/libtiff) into a `ProcessPoolExecutor` worker with a timeout. This
-package does the equivalent hardening for the *zbar* decode step, which
-sits immediately downstream of PIL in the same code path and has the same
-trust boundary: a chat-attached image is not more trusted than a
-downloaded file.
+`pyzbar.pyzbar.decode()` is often called on fully attacker-controlled
+image bytes - e.g. any barcode/QR image uploaded by a user, received as
+an attachment, or pulled from an untrusted URL. A common pattern in
+security-conscious pipelines is to isolate the *PIL* decode step
+(libpng/libjpeg/libwebp/libtiff) into a worker process with a timeout,
+since PIL's underlying image codecs are themselves attack surface. This
+package applies the equivalent hardening to the *zbar* decode step, which
+sits immediately downstream of PIL in that same code path and has the
+same trust boundary: an untrusted uploaded image is not more trusted than
+a downloaded file.
 
 ## What `pyzbar` actually is
 
@@ -70,8 +72,8 @@ pyzbar" can and cannot mean:
   `zbar_scan_image` itself, before control returns to Python, can still
   segfault or hang - no `try/except` in this file or any caller can catch
   that. Process isolation is the only real mitigation, identical in
-  spirit to the `ProcessPoolExecutor` fix already applied to the PIL
-  decode step in Elysium.
+  spirit to the `ProcessPoolExecutor` pattern commonly applied to the PIL
+  decode step in similar pipelines.
   - Uses `multiprocessing.Process` directly, not
     `concurrent.futures.ProcessPoolExecutor`, because the latter's `with`
     block blocks on exit waiting for a hung worker to finish on its own -
@@ -203,12 +205,11 @@ of filename content.
 
 
 
-## Recommended integration in Elysium
+## Recommended integration in a consuming application
 
-Replace the direct `pyzbar.pyzbar.decode(img)` call in `scan_qr_code()`
-with `pyzbar.safe.decode_isolated(img, timeout=...)`, and catch
-`TimeoutError` / `PyZbarError` there the same way the existing PIL-decode
-`ProcessPoolExecutor` path is already handled - treating a timeout or
-worker crash as a CRITICAL threat signal, not a silently-swallowed
-"clean" result, consistent with the v2.5.1 fix already applied to the PIL
-step.
+Replace a direct `pyzbar.pyzbar.decode(img)` call with
+`pyzbar.safe.decode_isolated(img, timeout=...)`, and catch
+`TimeoutError` / `PyZbarError` there the same way an existing PIL-decode
+isolation path (if one exists in your pipeline) is already handled -
+treating a timeout or worker crash as a signal to reject the input, not
+a silently-swallowed "clean" result.

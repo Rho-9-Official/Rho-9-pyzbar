@@ -29,8 +29,8 @@ What this module can and does do:
      a bug that trips *before* zbar returns control to Python at all (e.g.
      inside `zbar_scan_image` itself). For that, use
      `pyzbar.safe.decode_isolated()`, which runs decode() in a disposable
-     worker process with a hard timeout - the same pattern already applied
-     to Pillow decoding in Elysium's `scan_qr_code()`.
+     worker process with a hard timeout - the same pattern commonly used
+     for Pillow decoding of untrusted, attacker-supplied images.
 
 All caps below are conservative defaults sized for chat-message-attached
 images, not scientific/GIS imagery. Override via the module-level
