@@ -1,5 +1,7 @@
 # Rho-9 pyzbar (hardened fork)
 
+Note: Claude didn't realize it fixed the RCE,LMFAO, eh whatever, I'm no longer able to trigger commands via the exploit images I crafted like...what 2 years ago or so? I forget, but what matters is the problem seems to be fixed.
+
 A hardened fork of [`pyzbar`](https://github.com/NaturalHistoryMuseum/pyzbar) 0.1.9,
 a Python `ctypes` binding for the `libzbar` barcode/QR decoding library.
 
